@@ -34,7 +34,7 @@ function create() {
     const y = Phaser.Math.Between(0, this.sys.game.config.height);
     const size = Phaser.Math.Between(1, 2); // Уменьшили размер звезд
     const speed = Phaser.Math.FloatBetween(0.5, 2);
-    const star = this.add.circle(x, y, size, 0#E2E8E3); // Цвет в диапазоне серого
+    const star = this.add.circle(x, y, size, 0xFFE2E8E3); // Цвет в диапазоне серого
     star.speed = speed;
     stars.push(star);
   }
