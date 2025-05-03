@@ -1,1 +1,28 @@
-
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Clicker Game</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.js"></script>
+  </head>
+  <body>
+    <script>
+      const config = {
+        type: Phaser.AUTO,
+        width: 800,
+        height: 600,
+        scene: {
+          create() {
+            let count = 0;
+            const text = this.add.text(300, 300, 'Clicks: 0', { fontSize: '32px', fill: '#fff' });
+            this.input.on('pointerdown', () => {
+              count++;
+              text.setText('Clicks: ' + count);
+            });
+          }
+        }
+      };
+      new Phaser.Game(config);
+    </script>
+  </body>
+</html>
