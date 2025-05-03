@@ -69,15 +69,39 @@ function spawnEnemyGroup() {
   enemies = [];
   const count = Phaser.Math.Between(3, 5);
   for (let i = 0; i < count; i++) {
-    const x = Phaser.Math.Between(50, config.width - 50);
-    const y = Phaser.Math.Between(50, config.height / 2);
-    const enemy = this.add.circle(x, y, 15, 0xffffff);
+    const targetX = Phaser.Math.Between(50, config.width - 50);
+    const targetY = Phaser.Math.Between(50, config.height / 2);
+
+    // Выбираем сторону появления: сверху, слева или справа
+    const side = Phaser.Math.RND.pick(['top', 'left', 'right']);
+    let startX = targetX;
+    let startY = targetY;
+
+    if (side === 'top') {
+      startY = -30;
+    } else if (side === 'left') {
+      startX = -30;
+    } else if (side === 'right') {
+      startX = config.width + 30;
+    }
+
+    const enemy = this.add.circle(startX, startY, 15, 0xffffff);
     enemy.type = 'circle';
     enemy.hp = 1;
     enemy.direction = Math.random() < 0.5 ? -1 : 1;
     enemies.push(enemy);
+
+    // Плавная анимация влета к целевой позиции
+    this.tweens.add({
+      targets: enemy,
+      x: targetX,
+      y: targetY,
+      duration: 1000,
+      ease: 'Power2'
+    });
   }
 }
+
 
 function update() {
   if (gameOver) return;
