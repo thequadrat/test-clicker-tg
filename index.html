@@ -1,0 +1,80 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta http-equiv="Content-Style-Type" content="text/css">
+  <title></title>
+  <meta name="Generator" content="Cocoa HTML Writer">
+  <meta name="CocoaVersion" content="2299">
+  <style type="text/css">
+    p.p1 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica}
+    p.p2 {margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica; min-height: 14.0px}
+  </style>
+</head>
+<body>
+<p class="p1">&lt;!DOCTYPE html&gt;</p>
+<p class="p1">&lt;html&gt;</p>
+<p class="p1">&lt;head&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta charset="UTF-8" /&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;title&gt;Telegram Clicker Game&lt;/title&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;script src="https://cdn.jsdelivr.net/npm/phaser@3/dist/phaser.min.js"&gt;&lt;/script&gt;</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;style&gt;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>body { margin: 0; }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>canvas { display: block; margin: 0 auto; }</p>
+<p class="p1"><span class="Apple-converted-space">  </span>&lt;/style&gt;</p>
+<p class="p1">&lt;/head&gt;</p>
+<p class="p1">&lt;body&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;script&gt;</p>
+<p class="p1">let score = 0;</p>
+<p class="p1">let scoreText;</p>
+<p class="p2"><br></p>
+<p class="p1">const config = {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>type: Phaser.AUTO,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>width: 400,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>height: 300,</p>
+<p class="p1"><span class="Apple-converted-space">    </span>backgroundColor: '#1d1d1d',</p>
+<p class="p1"><span class="Apple-converted-space">    </span>scene: {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>preload: preload,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>create: create,</p>
+<p class="p1"><span class="Apple-converted-space">        </span>update: update</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}</p>
+<p class="p1">};</p>
+<p class="p2"><br></p>
+<p class="p1">function preload() {}</p>
+<p class="p2"><br></p>
+<p class="p1">function create() {</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const centerX = this.cameras.main.centerX;</p>
+<p class="p1"><span class="Apple-converted-space">    </span>const centerY = this.cameras.main.centerY;</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>scoreText = this.add.text(centerX, centerY - 50, 'Очки: 0', {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>fontSize: '32px',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: '#ffffff'</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}).setOrigin(0.5);</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>const button = this.add.text(centerX, centerY + 20, 'Нажми меня', {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>fontSize: '28px',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>backgroundColor: '#00aa00',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>color: '#ffffff',</p>
+<p class="p1"><span class="Apple-converted-space">        </span>padding: { x: 20, y: 10 }</p>
+<p class="p1"><span class="Apple-converted-space">    </span>}).setOrigin(0.5).setInteractive();</p>
+<p class="p2"><br></p>
+<p class="p1"><span class="Apple-converted-space">    </span>button.on('pointerdown', () =&gt; {</p>
+<p class="p1"><span class="Apple-converted-space">        </span>score += 10;</p>
+<p class="p1"><span class="Apple-converted-space">        </span>scoreText.setText('Очки: ' + score);</p>
+<p class="p1"><span class="Apple-converted-space">        </span>if (window.TelegramGameProxy) {</p>
+<p class="p1"><span class="Apple-converted-space">            </span>TelegramGameProxy.postEvent("score", score);<span class="Apple-converted-space">  </span>// отправка очков</p>
+<p class="p1"><span class="Apple-converted-space">        </span>}</p>
+<p class="p1"><span class="Apple-converted-space">    </span>});</p>
+<p class="p1">}</p>
+<p class="p2"><br></p>
+<p class="p1">function update() {}</p>
+<p class="p2"><br></p>
+<p class="p1">const game = new Phaser.Game(config);</p>
+<p class="p1">&lt;/script&gt;</p>
+<p class="p2"><br></p>
+<p class="p1">&lt;/body&gt;</p>
+<p class="p1">&lt;/html&gt;</p>
+</body>
+</html>
