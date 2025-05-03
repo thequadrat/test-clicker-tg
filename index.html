@@ -100,6 +100,11 @@ function update() {
   bullets.children.each(b => {
     if (b.active && b.y < -10) b.destroy();
   });
+
+  // Проверка на коллизии пуль с врагами
+  this.physics.world.collide(bullets, enemies, hitEnemy, null, this);
+  // Проверка на коллизии врагов с игроком
+  this.physics.world.collide(player, enemies, hitPlayer, null, this);
 }
 
 function fireBullet() {
@@ -110,6 +115,26 @@ function fireBullet() {
   bullet.setFillStyle(0xffffff, 1);
   bullet.setVelocityY(-300);
   bullet.setData('custom', true);
+}
+
+function hitEnemy(bullet, enemy) {
+  bullet.destroy();
+  enemy.hp--;
+
+  if (enemy.hp <= 0) {
+    enemy.destroy();
+  }
+}
+
+function hitPlayer(player, enemy) {
+  health--;
+  enemy.destroy();
+
+  if (health <= 0) {
+    player.setVisible(false);
+    gameOverText.setVisible(true);
+    restartButton.setVisible(true);
+  }
 }
 
 function spawnEnemyGroup() {
@@ -129,12 +154,15 @@ function spawnEnemyGroup() {
     if (type === 'circle') {
       enemy = scene.add.circle(startX, startY, 15, 0xffffff);
       enemy.hp = 1;
+      this.physics.add.existing(enemy);
     } else if (type === 'triangle') {
       enemy = scene.add.polygon(startX, startY, [0, 20, -15, -15, 15, -15], 0xffff00);
       enemy.hp = 2;
+      this.physics.add.existing(enemy);
     } else if (type === 'square') {
       enemy = scene.add.rectangle(startX, startY, 30, 30, 0xff0000);
       enemy.hp = 3;
+      this.physics.add.existing(enemy);
     }
 
     enemy.type = type;
@@ -196,8 +224,7 @@ function spawnEnemyGroup() {
   }
 }
 
-
-// new Phaser.Game(config);
+new Phaser.Game(config);
 </script>
 </body>
 </html>
