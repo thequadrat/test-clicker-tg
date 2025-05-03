@@ -68,11 +68,12 @@ function create() {
 function spawnEnemyGroup() {
   enemies = [];
   const count = Phaser.Math.Between(3, 5);
+  const speed = Phaser.Math.Between(30, 50); // пикселей в секунду
+
   for (let i = 0; i < count; i++) {
     const targetX = Phaser.Math.Between(50, config.width - 50);
     const targetY = Phaser.Math.Between(50, config.height / 2);
 
-    // Выбираем сторону появления: сверху, слева или справа
     const side = Phaser.Math.RND.pick(['top', 'left', 'right']);
     let startX = targetX;
     let startY = targetY;
@@ -91,16 +92,32 @@ function spawnEnemyGroup() {
     enemy.direction = Math.random() < 0.5 ? -1 : 1;
     enemies.push(enemy);
 
-    // Плавная анимация влета к целевой позиции
+    // Вычисляем расстояние до цели
+    const dx = targetX - startX;
+    const dy = targetY - startY;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+    const duration = (distance / speed) * 1000; // в мс
+
+    // Добавим колебания в траекторию (синусоида)
     this.tweens.add({
       targets: enemy,
-      x: targetX,
-      y: targetY,
-      duration: 1000,
-      ease: 'Power2'
+      x: {
+        getStart: () => startX,
+        getEnd: () => targetX + Phaser.Math.Between(-20, 20)
+      },
+      y: {
+        getStart: () => startY,
+        getEnd: () => targetY
+      },
+      duration,
+      ease: (t) => {
+        // Плавное движение + небольшое искривление
+        return t + 0.1 * Math.sin(t * Math.PI * 4);
+      }
     });
   }
 }
+
 
 
 function update() {
