@@ -26,7 +26,9 @@ const config = {
 const STAR_COUNT = 100;
 let stars = [];
 let player;
+let bullets = [];
 let speed = 3; // Начальная скорость игрока
+let shootingTime = 0; // Таймер для стрельбы
 
 function preload() {
   this.load.image('player', 'https://example.com/your-ship-image.png'); // Заменить на реальное изображение корабля
@@ -52,6 +54,19 @@ function create() {
     player.x = pointer.x;
     player.y = pointer.y;
   });
+
+  // Стрельба
+  this.time.addEvent({
+    delay: 500, // Таймер для стрельбы (500 мс = 2 выстрела в секунду)
+    callback: shootBullet,
+    callbackScope: this,
+    loop: true
+  });
+}
+
+function shootBullet() {
+  const bullet = this.add.rectangle(player.x, player.y - 30, 5, 10, 0xffffff); // Пуля: белый прямоугольник
+  bullets.push(bullet);
 }
 
 function update() {
@@ -66,9 +81,18 @@ function update() {
     }
   }
 
-  // Механика прокачки (пока можно увеличить скорость)
-  // Это можно связать с игровыми бустами или прокачкой
-  // speed += 0.001; // Пример ускорения
+  // Движение пуль
+  for (let i = 0; i < bullets.length; i++) {
+    const bullet = bullets[i];
+    bullet.y -= 5; // Пуля движется вверх
+
+    // Удаляем пулю, если она вышла за экран
+    if (bullet.y < 0) {
+      bullets.splice(i, 1);
+      bullet.destroy();
+      i--; // Сдвигаем индекс, чтобы не пропустить следующий элемент в массиве
+    }
+  }
 }
 
 new Phaser.Game(config);
