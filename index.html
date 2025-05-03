@@ -23,20 +23,18 @@ const config = {
   }
 };
 
-const STAR_COUNT = 100;
 let stars = [];
 let player;
 let bullets = [];
-let speed = 3; // Начальная скорость игрока
-let shootingTime = 0; // Таймер для стрельбы
+let enemies = [];
+let speed = 3;
+let gameOver = false;
 
-function preload() {
-  this.load.image('player', 'https://example.com/your-ship-image.png'); // Заменить на реальное изображение корабля
-}
+function preload() {}
 
 function create() {
-  // Создаём звезды
-  for (let i = 0; i < STAR_COUNT; i++) {
+  // Звезды
+  for (let i = 0; i < 100; i++) {
     const x = Phaser.Math.Between(0, this.sys.game.config.width);
     const y = Phaser.Math.Between(0, this.sys.game.config.height);
     const size = Phaser.Math.Between(0.5, 1);
@@ -45,11 +43,8 @@ function create() {
     stars.push(star);
   }
 
-  // Создаём игрока
-  player = this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height - 50, 'player');
-  player.setOrigin(0.5, 0.5);
-
-  // Настроим управление мышью или пальцем
+  // Игрок
+  player = this.add.rectangle(config.width / 2, config.height - 50, 30, 20, 0x00ffff);
   this.input.on('pointermove', (pointer) => {
     player.x = pointer.x;
     player.y = pointer.y;
@@ -57,41 +52,87 @@ function create() {
 
   // Стрельба
   this.time.addEvent({
-    delay: 500, // Таймер для стрельбы (500 мс = 2 выстрела в секунду)
-    callback: shootBullet,
-    callbackScope: this,
+    delay: 500,
+    callback: () => {
+      if (!gameOver) {
+        const bullet = this.add.rectangle(player.x, player.y - 30, 5, 10, 0xffffff);
+        bullets.push(bullet);
+      }
+    },
     loop: true
   });
+
+  spawnEnemyGroup.call(this);
 }
 
-function shootBullet() {
-  const bullet = this.add.rectangle(player.x, player.y - 30, 5, 10, 0xffffff); // Пуля: белый прямоугольник
-  bullets.push(bullet);
+function spawnEnemyGroup() {
+  enemies = [];
+  const count = Phaser.Math.Between(3, 5);
+  for (let i = 0; i < count; i++) {
+    const x = Phaser.Math.Between(50, config.width - 50);
+    const y = Phaser.Math.Between(50, config.height / 2);
+    const enemy = this.add.circle(x, y, 15, 0xffffff);
+    enemy.type = 'circle';
+    enemy.hp = 1;
+    enemy.direction = Math.random() < 0.5 ? -1 : 1;
+    enemies.push(enemy);
+  }
 }
 
 function update() {
-  const height = this.sys.game.config.height;
+  if (gameOver) return;
 
-  // Обновление движения звезд
+  // Анимация звезд
   for (let star of stars) {
     star.y += star.speed;
-    if (star.y > height) {
+    if (star.y > config.height) {
       star.y = 0;
-      star.x = Phaser.Math.Between(0, this.sys.game.config.width);
+      star.x = Phaser.Math.Between(0, config.width);
+    }
+  }
+
+  // Движение врагов (влево-вправо)
+  for (let enemy of enemies) {
+    enemy.x += 0.5 * enemy.direction;
+    if (enemy.x < 20 || enemy.x > config.width - 20) {
+      enemy.direction *= -1;
     }
   }
 
   // Движение пуль
   for (let i = 0; i < bullets.length; i++) {
     const bullet = bullets[i];
-    bullet.y -= 5; // Пуля движется вверх
-
-    // Удаляем пулю, если она вышла за экран
+    bullet.y -= 5;
     if (bullet.y < 0) {
-      bullets.splice(i, 1);
       bullet.destroy();
-      i--; // Сдвигаем индекс, чтобы не пропустить следующий элемент в массиве
+      bullets.splice(i, 1);
+      i--;
+      continue;
     }
+
+    // Проверка попадания по врагам
+    for (let j = 0; j < enemies.length; j++) {
+      const enemy = enemies[j];
+      const dx = bullet.x - enemy.x;
+      const dy = bullet.y - enemy.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 15) {
+        bullet.destroy();
+        bullets.splice(i, 1);
+        i--;
+        enemy.hp--;
+        if (enemy.hp <= 0) {
+          enemy.destroy();
+          enemies.splice(j, 1);
+        }
+        break;
+      }
+    }
+  }
+
+  // Все враги уничтожены — спавн новой группы
+  if (enemies.length === 0) {
+    spawnEnemyGroup.call(this);
   }
 }
 
