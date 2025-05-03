@@ -1,28 +1,57 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <title>Clicker Game</title>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.js"></script>
-  </head>
-  <body>
-    <script>
-      const config = {
-        type: Phaser.AUTO,
-        width: 800,
-        height: 600,
-        scene: {
-          create() {
-            let count = 0;
-            const text = this.add.text(300, 300, 'Clicks: 0', { fontSize: '32px', fill: '#fff' });
-            this.input.on('pointerdown', () => {
-              count++;
-              text.setText('Clicks: ' + count);
-            });
-          }
-        }
-      };
-      new Phaser.Game(config);
-    </script>
-  </body>
+<head>
+  <meta charset="utf-8" />
+  <title>Space Shooter</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.70.0/dist/phaser.min.js"></script>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; margin: 0 auto; }
+  </style>
+</head>
+<body>
+<script>
+const config = {
+  type: Phaser.AUTO,
+  width: 480,
+  height: 720,
+  backgroundColor: '#000000',
+  scene: {
+    preload,
+    create,
+    update
+  }
+};
+
+const STAR_COUNT = 100;
+let stars = [];
+
+function preload() {}
+
+function create() {
+  for (let i = 0; i < STAR_COUNT; i++) {
+    const x = Phaser.Math.Between(0, this.sys.game.config.width);
+    const y = Phaser.Math.Between(0, this.sys.game.config.height);
+    const size = Phaser.Math.Between(1, 3);
+    const speed = Phaser.Math.FloatBetween(0.5, 2);
+    const star = this.add.circle(x, y, size, 0xffffff);
+    star.speed = speed;
+    stars.push(star);
+  }
+}
+
+function update() {
+  const height = this.sys.game.config.height;
+  for (let star of stars) {
+    star.y += star.speed;
+    if (star.y > height) {
+      star.y = 0;
+      star.x = Phaser.Math.Between(0, this.sys.game.config.width);
+    }
+  }
+}
+
+new Phaser.Game(config);
+</script>
+</body>
 </html>
