@@ -11,88 +11,129 @@
 </head>
 <body>
 <script>
+// Phaser 3 must be included in your HTML before this script
+
 const config = {
   type: Phaser.AUTO,
   width: 480,
-  height: 720,
+  height: 800,
   backgroundColor: '#000000',
+  physics: {
+    default: 'arcade',
+    arcade: {
+      debug: false
+    }
+  },
   scene: {
-    preload,
-    create,
-    update
+    preload: preload,
+    create: create,
+    update: update
   }
 };
 
-let stars = [];
-let player;
-let bullets = [];
-let enemies = [];
-let speed = 3;
-let gameOver = false;
+const game = new Phaser.Game(config);
 
-function preload() {}
+let player;
+let bullets;
+let cursors;
+let lastFired = 0;
+let enemies = [];
+let health = 10;
+let gameOverText, restartButton;
+
+function preload() {
+  this.load.image('player', 'https://labs.phaser.io/assets/sprites/space-baddie.png');
+}
 
 function create() {
-  // Звезды
+  // Звездный фон
+  this.stars = this.add.group({ key: 'star', repeat: 100 });
   for (let i = 0; i < 100; i++) {
-    const x = Phaser.Math.Between(0, this.sys.game.config.width);
-    const y = Phaser.Math.Between(0, this.sys.game.config.height);
+    const x = Phaser.Math.Between(0, config.width);
+    const y = Phaser.Math.Between(0, config.height);
     const size = Phaser.Math.Between(0.5, 1);
     const star = this.add.circle(x, y, size, 0xFFE2E8E3);
-    star.speed = Phaser.Math.FloatBetween(0.5, 2);
-    stars.push(star);
+    this.stars.add(star);
   }
 
-  // Игрок
-  player = this.add.rectangle(config.width / 2, config.height - 50, 30, 20, 0x00ffff);
-  this.input.on('pointermove', (pointer) => {
-    player.x = pointer.x;
-    player.y = pointer.y;
+  bullets = this.physics.add.group();
+
+  player = this.physics.add.sprite(config.width / 2, config.height - 50, 'player');
+  player.setCollideWorldBounds(true);
+  player.setScale(0.8);
+
+  this.input.on('pointermove', pointer => {
+    this.physics.moveTo(player, pointer.x, pointer.y, 300);
   });
 
-  // Стрельба
   this.time.addEvent({
-    delay: 500,
-    callback: () => {
-      if (!gameOver) {
-        const bullet = this.add.rectangle(player.x, player.y - 30, 5, 10, 0xffffff);
-        bullets.push(bullet);
-      }
-    },
+    delay: 1000,
+    callback: spawnEnemyGroup,
+    callbackScope: this,
     loop: true
   });
 
-  spawnEnemyGroup.call(this);
+  this.time.addEvent({
+    delay: 500,
+    callback: fireBullet,
+    callbackScope: this,
+    loop: true
+  });
+
+  gameOverText = this.add.text(config.width / 2, config.height / 2, 'Game Over', {
+    fontSize: '48px', fill: '#fff'
+  }).setOrigin(0.5).setVisible(false);
+
+  restartButton = this.add.text(config.width / 2, config.height / 2 + 60, 'Play Again', {
+    fontSize: '32px', fill: '#fff', backgroundColor: '#333', padding: 10
+  }).setOrigin(0.5).setInteractive().setVisible(false);
+
+  restartButton.on('pointerdown', () => this.scene.restart());
+}
+
+function update() {
+  Phaser.Actions.IncY(this.stars.getChildren(), 1);
+  this.stars.getChildren().forEach(star => {
+    if (star.y > config.height) star.y = 0;
+  });
+
+  bullets.children.each(b => {
+    if (b.active && b.y < -10) b.destroy();
+  });
+}
+
+function fireBullet() {
+  if (health <= 0) return;
+
+  const bullet = bullets.create(player.x, player.y - 20, null);
+  bullet.setSize(2, 5);
+  bullet.setFillStyle(0xffffff, 1);
+  bullet.setVelocityY(-300);
+  bullet.setData('custom', true);
 }
 
 function spawnEnemyGroup() {
-  enemies = [];
+  const scene = this;
   const count = Phaser.Math.Between(3, 5);
+  enemies = [];
 
   for (let i = 0; i < count; i++) {
     const type = Phaser.Math.RND.pick(['circle', 'triangle', 'square']);
     const targetX = Phaser.Math.Between(60, config.width - 60);
     const targetY = Phaser.Math.Between(40, config.height / 2);
 
-    let startX, startY;
-
-    if (type === 'circle') {
-      startX = Phaser.Math.RND.pick([-30, config.width + 30]);
-      startY = -30;
-    } else {
-      startX = Phaser.Math.RND.pick([-30, config.width + 30]);
-      startY = -30;
-    }
+    let startX = Phaser.Math.RND.pick([-30, config.width + 30]);
+    let startY = -30;
 
     let enemy;
     if (type === 'circle') {
-      enemy = this.add.circle(startX, startY, 15, 0xffffff);
+      enemy = scene.add.circle(startX, startY, 15, 0xffffff);
       enemy.hp = 1;
     } else if (type === 'triangle') {
-      enemy = this.add.polygon(startX, startY, [0, 20, -15, -15, 15, -15], 0xffff00);
+      enemy = scene.add.polygon(startX, startY, [0, 20, -15, -15, 15, -15], 0xffff00);
       enemy.hp = 2;
     } else if (type === 'square') {
-      enemy = this.add.rectangle(startX, startY, 30, 30, 0xff0000);
+      enemy = scene.add.rectangle(startX, startY, 30, 30, 0xff0000);
       enemy.hp = 3;
     }
 
@@ -100,7 +141,6 @@ function spawnEnemyGroup() {
     enemies.push(enemy);
 
     if (type === 'circle') {
-      // Плавная кривая
       const controlX = (startX + targetX) / 2 + Phaser.Math.Between(-100, 100);
       const controlY = startY + Phaser.Math.Between(50, 150);
       const curve = new Phaser.Curves.QuadraticBezier(
@@ -109,48 +149,41 @@ function spawnEnemyGroup() {
         new Phaser.Math.Vector2(targetX, targetY)
       );
       const duration = 3000;
-
-      this.tweens.addCounter({
+      scene.tweens.addCounter({
         from: 0, to: 1, duration,
-        onUpdate: (tween) => {
+        onUpdate: tween => {
           const t = tween.getValue();
           const point = curve.getPoint(t);
           enemy.setPosition(point.x, point.y);
         }
       });
-
     } else if (type === 'triangle') {
-      // Синусоида
       const duration = 2000;
       const amplitude = Phaser.Math.Between(20, 40);
       const baseY = targetY;
-      const startTime = this.time.now;
-
-      this.tweens.addCounter({
+      scene.tweens.addCounter({
         from: 0, to: 1, duration,
-        onUpdate: (tween) => {
+        onUpdate: tween => {
           const t = tween.getValue();
           const x = Phaser.Math.Interpolation.Linear([startX, targetX], t);
           const y = Phaser.Math.Interpolation.Linear([startY, baseY], t) + amplitude * Math.sin(t * 8 * Math.PI);
           enemy.setPosition(x, y);
         }
       });
-
     } else if (type === 'square') {
-      // Промежуточная остановка
-      const midX = config.width - targetX; // зеркальная по горизонтали
+      const midX = config.width - targetX;
       const midY = targetY / 2;
       const duration1 = 1500;
       const duration2 = 2000;
 
-      this.tweens.add({
+      scene.tweens.add({
         targets: enemy,
         x: midX, y: midY,
         duration: duration1,
         ease: 'Linear',
         onComplete: () => {
-          this.time.delayedCall(5000, () => {
-            this.tweens.add({
+          scene.time.delayedCall(5000, () => {
+            scene.tweens.add({
               targets: enemy,
               x: targetX, y: targetY,
               duration: duration2,
@@ -163,66 +196,6 @@ function spawnEnemyGroup() {
   }
 }
 
-
-
-
-
-function update() {
-  if (gameOver) return;
-
-  // Анимация звезд
-  for (let star of stars) {
-    star.y += star.speed;
-    if (star.y > config.height) {
-      star.y = 0;
-      star.x = Phaser.Math.Between(0, config.width);
-    }
-  }
-
-  // Движение врагов (влево-вправо)
-  for (let enemy of enemies) {
-    enemy.x += 0.5 * enemy.direction;
-    if (enemy.x < 20 || enemy.x > config.width - 20) {
-      enemy.direction *= -1;
-    }
-  }
-
-  // Движение пуль
-  for (let i = 0; i < bullets.length; i++) {
-    const bullet = bullets[i];
-    bullet.y -= 5;
-    if (bullet.y < 0) {
-      bullet.destroy();
-      bullets.splice(i, 1);
-      i--;
-      continue;
-    }
-
-    // Проверка попадания по врагам
-    for (let j = 0; j < enemies.length; j++) {
-      const enemy = enemies[j];
-      const dx = bullet.x - enemy.x;
-      const dy = bullet.y - enemy.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 15) {
-        bullet.destroy();
-        bullets.splice(i, 1);
-        i--;
-        enemy.hp--;
-        if (enemy.hp <= 0) {
-          enemy.destroy();
-          enemies.splice(j, 1);
-        }
-        break;
-      }
-    }
-  }
-
-  // Все враги уничтожены — спавн новой группы
-  if (enemies.length === 0) {
-    spawnEnemyGroup.call(this);
-  }
-}
 
 new Phaser.Game(config);
 </script>
