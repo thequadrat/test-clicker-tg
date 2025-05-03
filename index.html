@@ -155,70 +155,46 @@ function spawnEnemyGroup() {
       enemy = scene.add.circle(startX, startY, 15, 0xffffff);
       enemy.hp = 1;
       this.physics.add.existing(enemy);
+      enemy.body.setCollideWorldBounds(true);
     } else if (type === 'triangle') {
       enemy = scene.add.polygon(startX, startY, [0, 20, -15, -15, 15, -15], 0xffff00);
       enemy.hp = 2;
       this.physics.add.existing(enemy);
+      enemy.body.setCollideWorldBounds(true);
     } else if (type === 'square') {
       enemy = scene.add.rectangle(startX, startY, 30, 30, 0xff0000);
       enemy.hp = 3;
       this.physics.add.existing(enemy);
+      enemy.body.setCollideWorldBounds(true);
     }
 
     enemy.type = type;
     enemies.push(enemy);
 
+    // Простое движение врагов
     if (type === 'circle') {
-      const controlX = (startX + targetX) / 2 + Phaser.Math.Between(-100, 100);
-      const controlY = startY + Phaser.Math.Between(50, 150);
-      const curve = new Phaser.Curves.QuadraticBezier(
-        new Phaser.Math.Vector2(startX, startY),
-        new Phaser.Math.Vector2(controlX, controlY),
-        new Phaser.Math.Vector2(targetX, targetY)
-      );
-      const duration = 3000;
-      scene.tweens.addCounter({
-        from: 0, to: 1, duration,
-        onUpdate: tween => {
-          const t = tween.getValue();
-          const point = curve.getPoint(t);
-          enemy.setPosition(point.x, point.y);
-        }
+      this.tweens.add({
+        targets: enemy,
+        x: targetX,
+        y: targetY,
+        duration: 3000,
+        ease: 'Power1'
       });
     } else if (type === 'triangle') {
-      const duration = 2000;
-      const amplitude = Phaser.Math.Between(20, 40);
-      const baseY = targetY;
-      scene.tweens.addCounter({
-        from: 0, to: 1, duration,
-        onUpdate: tween => {
-          const t = tween.getValue();
-          const x = Phaser.Math.Interpolation.Linear([startX, targetX], t);
-          const y = Phaser.Math.Interpolation.Linear([startY, baseY], t) + amplitude * Math.sin(t * 8 * Math.PI);
-          enemy.setPosition(x, y);
-        }
+      this.tweens.add({
+        targets: enemy,
+        x: targetX,
+        y: targetY,
+        duration: 2500,
+        ease: 'Power1'
       });
     } else if (type === 'square') {
-      const midX = config.width - targetX;
-      const midY = targetY / 2;
-      const duration1 = 1500;
-      const duration2 = 2000;
-
-      scene.tweens.add({
+      this.tweens.add({
         targets: enemy,
-        x: midX, y: midY,
-        duration: duration1,
-        ease: 'Linear',
-        onComplete: () => {
-          scene.time.delayedCall(5000, () => {
-            scene.tweens.add({
-              targets: enemy,
-              x: targetX, y: targetY,
-              duration: duration2,
-              ease: 'Power1'
-            });
-          });
-        }
+        x: targetX,
+        y: targetY,
+        duration: 3500,
+        ease: 'Power1'
       });
     }
   }
