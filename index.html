@@ -32,7 +32,7 @@ function create() {
   for (let i = 0; i < STAR_COUNT; i++) {
     const x = Phaser.Math.Between(0, this.sys.game.config.width);
     const y = Phaser.Math.Between(0, this.sys.game.config.height);
-    const size = Phaser.Math.Between(1, 2); // Уменьшили размер звезд
+    const size = Phaser.Math.Between(0.5, 1); // Уменьшили размер звезд
     const speed = Phaser.Math.FloatBetween(0.5, 2);
     const star = this.add.circle(x, y, size, 0xFFE2E8E3); // Цвет в диапазоне серого
     star.speed = speed;
