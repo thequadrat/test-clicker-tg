@@ -68,22 +68,22 @@ function create() {
 function spawnEnemyGroup() {
   enemies = [];
   const count = Phaser.Math.Between(3, 5);
-  const speed = Phaser.Math.Between(30, 50); // пикселей в секунду
+  const speed = Phaser.Math.Between(30, 50);
 
   for (let i = 0; i < count; i++) {
-    const targetX = Phaser.Math.Between(50, config.width - 50);
-    const targetY = Phaser.Math.Between(50, config.height / 2);
+    const targetX = Phaser.Math.Between(60, config.width - 60);
+    const targetY = Phaser.Math.Between(40, config.height / 2);
 
-    const side = Phaser.Math.RND.pick(['top', 'left', 'right']);
-    let startX = targetX;
-    let startY = targetY;
+    // Выбираем сторону появления
+    const side = Phaser.Math.RND.pick(['top-left', 'top-right']);
+    let startX, startY;
 
-    if (side === 'top') {
-      startY = -30;
-    } else if (side === 'left') {
+    if (side === 'top-left') {
       startX = -30;
-    } else if (side === 'right') {
+      startY = -30;
+    } else {
       startX = config.width + 30;
+      startY = -30;
     }
 
     const enemy = this.add.circle(startX, startY, 15, 0xffffff);
@@ -92,31 +92,33 @@ function spawnEnemyGroup() {
     enemy.direction = Math.random() < 0.5 ? -1 : 1;
     enemies.push(enemy);
 
-    // Вычисляем расстояние до цели
-    const dx = targetX - startX;
-    const dy = targetY - startY;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const duration = (distance / speed) * 1000; // в мс
+    // Параметры кривой траектории
+    const controlX = (startX + targetX) / 2 + Phaser.Math.Between(-100, 100);
+    const controlY = startY + Phaser.Math.Between(50, 150);
 
-    // Добавим колебания в траекторию (синусоида)
-    this.tweens.add({
-      targets: enemy,
-      x: {
-        getStart: () => startX,
-        getEnd: () => targetX + Phaser.Math.Between(-20, 20)
-      },
-      y: {
-        getStart: () => startY,
-        getEnd: () => targetY
-      },
+    // Двигаемся по квадратичной кривой Безье
+    const curve = new Phaser.Curves.QuadraticBezier(
+      new Phaser.Math.Vector2(startX, startY),
+      new Phaser.Math.Vector2(controlX, controlY),
+      new Phaser.Math.Vector2(targetX, targetY)
+    );
+
+    const duration = (Phaser.Math.Distance.Between(startX, startY, targetX, targetY) / speed) * 1000;
+
+    // Анимация вдоль кривой
+    this.tweens.addCounter({
+      from: 0,
+      to: 1,
       duration,
-      ease: (t) => {
-        // Плавное движение + небольшое искривление
-        return t + 0.1 * Math.sin(t * Math.PI * 4);
+      onUpdate: (tween) => {
+        const t = tween.getValue();
+        const point = curve.getPoint(t);
+        enemy.setPosition(point.x, point.y);
       }
     });
   }
 }
+
 
 
 
