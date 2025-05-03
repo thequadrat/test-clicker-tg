@@ -25,23 +25,39 @@ const config = {
 
 const STAR_COUNT = 100;
 let stars = [];
+let player;
+let speed = 3; // Начальная скорость игрока
 
-function preload() {}
+function preload() {
+  this.load.image('player', 'https://example.com/your-ship-image.png'); // Заменить на реальное изображение корабля
+}
 
 function create() {
+  // Создаём звезды
   for (let i = 0; i < STAR_COUNT; i++) {
     const x = Phaser.Math.Between(0, this.sys.game.config.width);
     const y = Phaser.Math.Between(0, this.sys.game.config.height);
-    const size = Phaser.Math.Between(0.5, 1); // Уменьшили размер звезд
-    const speed = Phaser.Math.FloatBetween(0.5, 2);
-    const star = this.add.circle(x, y, size, 0xFFE2E8E3); // Цвет в диапазоне серого
-    star.speed = speed;
+    const size = Phaser.Math.Between(0.5, 1);
+    const star = this.add.circle(x, y, size, 0xFFE2E8E3);
+    star.speed = Phaser.Math.FloatBetween(0.5, 2);
     stars.push(star);
   }
+
+  // Создаём игрока
+  player = this.add.sprite(this.sys.game.config.width / 2, this.sys.game.config.height - 50, 'player');
+  player.setOrigin(0.5, 0.5);
+
+  // Настроим управление мышью или пальцем
+  this.input.on('pointermove', (pointer) => {
+    player.x = pointer.x;
+    player.y = pointer.y;
+  });
 }
 
 function update() {
   const height = this.sys.game.config.height;
+
+  // Обновление движения звезд
   for (let star of stars) {
     star.y += star.speed;
     if (star.y > height) {
@@ -49,6 +65,10 @@ function update() {
       star.x = Phaser.Math.Between(0, this.sys.game.config.width);
     }
   }
+
+  // Механика прокачки (пока можно увеличить скорость)
+  // Это можно связать с игровыми бустами или прокачкой
+  // speed += 0.001; // Пример ускорения
 }
 
 new Phaser.Game(config);
